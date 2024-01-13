@@ -1,9 +1,12 @@
-namespace TOCSharp.Commands.Converters;
+using System.Threading.Tasks;
 
-public class StringConverter : IArgumentConverter<string>
+namespace TOCSharp.Commands.Converters
 {
-    public Task<string?> ConvertAsync(CommandContext context, string input)
+    public class StringConverter : IArgumentConverter<string>
     {
-        return Task.FromResult(input)!;
+        public Task<string?> ConvertAsync(CommandContext context, string input)
+        {
+            return Task.FromResult(input)!;
+        }
     }
 }

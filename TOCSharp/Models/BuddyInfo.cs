@@ -1,22 +1,25 @@
-namespace TOCSharp.Models;
+using System;
 
-public class BuddyInfo
+namespace TOCSharp.Models
 {
-    public required string Screenname;
-    public required bool Online;
-    public required int Evil;
-    public required DateTimeOffset SignonTime;
-    public required int IdleTime;
-    public required UserClass Class;
-}
+    public struct BuddyInfo
+    {
+        public string Screenname;
+        public bool Online;
+        public int Evil;
+        public DateTimeOffset SignonTime;
+        public int IdleTime;
+        public UserClass Class;
+    }
 
-[Flags]
-public enum UserClass
-{
-    None = 0x00,
-    OnAOL = 0x01,
-    OSCARAdmin = 0x02,
-    OSCARUnconfirmed = 0x04,
-    OSCARNormal = 0x08,
-    Unavailable = 0x10
+    [Flags]
+    public enum UserClass
+    {
+        None = 0x00,
+        OnAOL = 0x01,
+        OSCARAdmin = 0x02,
+        OSCARUnconfirmed = 0x04,
+        OSCARNormal = 0x08,
+        Unavailable = 0x10
+    }
 }

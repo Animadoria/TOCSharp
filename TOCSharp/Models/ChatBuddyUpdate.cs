@@ -1,8 +1,9 @@
-namespace TOCSharp.Models;
-
-public class ChatBuddyUpdate
+namespace TOCSharp.Models
 {
-    public required string RoomID;
-    public required bool IsOnline;
-    public required string[] Buddies;
+    public struct ChatBuddyUpdate
+    {
+        public string RoomID;
+        public bool IsOnline;
+        public string[] Buddies;
+    }
 }

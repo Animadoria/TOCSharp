@@ -1,8 +1,10 @@
-namespace TOCSharp.Commands.Converters;
+using System.Threading.Tasks;
 
-public class NullableConverter<T> : IArgumentConverter<T?> where T : struct
+namespace TOCSharp.Commands.Converters
 {
-    public async Task<T?> ConvertAsync(CommandContext context, string input)
+    public class NullableConverter<T> : IArgumentConverter<T?> where T : struct
+    {
+        public async Task<T?> ConvertAsync(CommandContext context, string input)
     {
         if (input == "null")
         {
@@ -16,5 +18,6 @@ public class NullableConverter<T> : IArgumentConverter<T?> where T : struct
         }
 
         return default;
+    }
     }
 }

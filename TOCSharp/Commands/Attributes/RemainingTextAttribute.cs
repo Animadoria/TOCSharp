@@ -1,6 +1,9 @@
-namespace TOCSharp.Commands.Attributes;
+using System;
 
-[AttributeUsage(AttributeTargets.Parameter)]
-public class RemainingTextAttribute  : Attribute
+namespace TOCSharp.Commands.Attributes
 {
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public class RemainingTextAttribute  : Attribute
+    {
+    }
 }

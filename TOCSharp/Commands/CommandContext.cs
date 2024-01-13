@@ -1,34 +1,42 @@
-namespace TOCSharp.Commands;
+using System.Threading.Tasks;
 
-public class CommandContext
+namespace TOCSharp.Commands
 {
-    public required bool IsChat { get; init; }
-    public required bool IsWhisper { get; init; }
-    public required string Sender { get; init; }
-    public required string ChatRoomID { get; init; }
-    public required string Message { get; init; }
-    public string Prefix { get; set; } = "";
-    public required CommandsSystem CommandsSystem { get; init; }
-
-    public async Task ReplyAsync(string message, string? toWhisper = null)
+    public class CommandContext
     {
-        if (this.IsChat)
-        {
-            var split = message.Split("\n");
-            for (int i = 0; i < split.Length; i++)
-            {
-                string? str = split[i];
+        public bool IsChat { get; set; }
+        public bool IsWhisper { get; set; }
+        public string Sender { get; set; }= null!;
+        public string ChatRoomID { get; set; }= null!;
+        public string Message { get; set; } = null!;
+        public string Prefix { get; set; } = "";
+        public CommandsSystem CommandsSystem { get; set; } = null!;
 
-                await this.CommandsSystem.Client.SendChatMessageAsync(this.ChatRoomID, str, toWhisper);
-                if (i != split.Length - 1)
+        internal CommandContext()
+        {
+
+        }
+
+        public async Task ReplyAsync(string message, string? toWhisper = null)
+        {
+            if (this.IsChat)
+            {
+                var split = message.Split("\n");
+                for (int i = 0; i < split.Length; i++)
                 {
-                    await Task.Delay(1000);
+                    string? str = split[i];
+
+                    await this.CommandsSystem.Client.SendChatMessageAsync(this.ChatRoomID, str, toWhisper);
+                    if (i != split.Length - 1)
+                    {
+                        await Task.Delay(1000);
+                    }
                 }
             }
-        }
-        else
-        {
-            await this.CommandsSystem.Client.SendIM(message, this.Sender);
+            else
+            {
+                await this.CommandsSystem.Client.SendIM(message, this.Sender);
+            }
         }
     }
 }

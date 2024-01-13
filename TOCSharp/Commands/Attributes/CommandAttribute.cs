@@ -1,22 +1,27 @@
-namespace TOCSharp.Commands.Attributes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
-[AttributeUsage(AttributeTargets.Method)]
-public class CommandAttribute : Attribute
+namespace TOCSharp.Commands.Attributes
 {
-    public string[] Names { get; }
-
-    public CommandAttribute(string name)
+    [AttributeUsage(AttributeTargets.Method)]
+    public class CommandAttribute : Attribute
     {
-        this.Names = [name];
-    }
+        public string[] Names { get; }
 
-    public CommandAttribute(IEnumerable<string> names)
+        public CommandAttribute(string name)
+        {
+            this.Names = new[] { name };
+        }
+
+        public CommandAttribute(IEnumerable<string> names)
     {
         this.Names = names.ToArray();
     }
 
-    public CommandAttribute(params string[] names)
+        public CommandAttribute(params string[] names)
     {
         this.Names = names;
+    }
     }
 }

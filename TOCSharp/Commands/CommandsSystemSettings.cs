@@ -1,7 +1,10 @@
-namespace TOCSharp.Commands;
+using System.Collections.Generic;
 
-public class CommandsSystemSettings
+namespace TOCSharp.Commands
 {
-    public IEnumerable<string> StringPrefixes { get; init; } = new[] { "/" };
-    public char[] QuotationMarks { get; init; } = ['"'];
+    public class CommandsSystemSettings
+    {
+        public IEnumerable<string> StringPrefixes { get; set; } = new[] { "/" };
+        public char[] QuotationMarks { get; set; } = { '"' };
+    }
 }

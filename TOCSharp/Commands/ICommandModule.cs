@@ -1,6 +1,7 @@
-namespace TOCSharp.Commands;
-
-public interface ICommandModule
+namespace TOCSharp.Commands
 {
+    public interface ICommandModule
+    {
 
+    }
 }

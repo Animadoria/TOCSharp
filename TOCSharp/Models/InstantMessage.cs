@@ -1,9 +1,10 @@
 
 
-namespace TOCSharp.Models;
-
-public class InstantMessage
+namespace TOCSharp.Models
 {
-    public required string Sender;
-    public required string Message;
+    public struct InstantMessage
+    {
+        public string Sender;
+        public string Message;
+    }
 }

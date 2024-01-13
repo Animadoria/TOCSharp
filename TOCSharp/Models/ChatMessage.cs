@@ -1,9 +1,10 @@
-namespace TOCSharp.Models;
-
-public class ChatMessage
+namespace TOCSharp.Models
 {
-    public required string RoomID;
-    public required string Sender;
-    public required bool Whisper;
-    public required string Message;
+    public struct ChatMessage
+    {
+        public string RoomID;
+        public string Sender;
+        public bool Whisper;
+        public string Message;
+    }
 }
