@@ -35,7 +35,7 @@ namespace TOCSharp.Commands
             }
             else
             {
-                await this.CommandsSystem.Client.SendIM(message, this.Sender);
+                await this.CommandsSystem.Client.SendIMAsync(message, this.Sender);
             }
         }
     }

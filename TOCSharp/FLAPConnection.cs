@@ -18,7 +18,8 @@ namespace TOCSharp
         private readonly ushort port;
 
         public bool Connected { get; private set; }
-        public AsyncEventHandler<FLAPPacket>? PacketReceived;
+        public event AsyncEventHandler<FLAPPacket>? PacketReceived;
+        public event AsyncEventHandler? Disconnected;
 
         private readonly Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
@@ -41,10 +42,13 @@ namespace TOCSharp
             _ = this.FLAPActivity();
         }
 
-        public Task DisconnectAsync()
+        public async Task DisconnectAsync()
         {
             this.socket.Disconnect(false);
-            return Task.CompletedTask;
+            this.Connected = false;
+
+            if (this.Disconnected != null)
+                await this.Disconnected.Invoke(this, EventArgs.Empty);
         }
 
         private async Task FLAPActivity()
@@ -105,6 +109,7 @@ namespace TOCSharp
             }
 
             this.Connected = false;
+            this.Disconnected?.Invoke(this, EventArgs.Empty);
         }
 
         public async Task SendPacketAsync(FLAPPacket packet)

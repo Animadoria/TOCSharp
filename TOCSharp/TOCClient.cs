@@ -14,7 +14,6 @@ namespace TOCSharp
 
         private readonly FLAPConnection connection = new FLAPConnection();
 
-
         public event AsyncEventHandler? SignOnDone;
         public event AsyncEventHandler<string>? NickReceived;
         public event AsyncEventHandler<BuddyInfo>? BuddyInfoReceived;
@@ -22,13 +21,22 @@ namespace TOCSharp
         public event AsyncEventHandler<ChatRoom>? ChatJoined;
         public event AsyncEventHandler<ChatBuddyUpdate>? ChatBuddyUpdate;
         public event AsyncEventHandler<InstantMessage>? IMReceived;
+        public event AsyncEventHandler<string>? ErrorReceived;
+        public event AsyncEventHandler? Disconnected;
 
         public TOCClient(string screenname, string password)
         {
             this.Screenname = screenname;
             this.password = password;
 
-            this.connection.PacketReceived += PacketReceived;
+            this.connection.Disconnected += this.ConnectionOnDisconnected;
+            this.connection.PacketReceived += this.PacketReceived;
+        }
+
+        private async Task ConnectionOnDisconnected(object sender, EventArgs e)
+        {
+            if (this.Disconnected != null)
+                await this.Disconnected.Invoke(this, EventArgs.Empty);
         }
 
         public async Task ConnectAsync()
@@ -174,6 +182,16 @@ namespace TOCSharp
                         });
                     }
                 }
+                else if (command == "ERROR")
+                {
+                    string[] split = data.Split(':');
+                    string error = split[1];
+
+                    if (this.ErrorReceived != null)
+                    {
+                        await this.ErrorReceived.Invoke(this, error);
+                    }
+                }
             }
         }
 
@@ -268,9 +286,14 @@ namespace TOCSharp
             }
         }
 
-        public async Task SendIM(string message, string sender)
+        public async Task SendIMAsync(string message, string sender)
         {
             await this.SendCommandAsync("toc2_send_im_enc", sender, "F", "U", "en", message);
+        }
+
+        public async Task DisconnectAsync()
+        {
+            await this.connection.DisconnectAsync();
         }
     }
 }
