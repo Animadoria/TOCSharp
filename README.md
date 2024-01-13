@@ -1,6 +1,6 @@
 # TOCSharp
 
-Quick TOC2 client I made. Works on [https://nina.chat](the NINA server). 
+Quick TOC2 client I made. Works on (https://nina.chat)[the NINA server]. 
 
 Has a command system inspired by DSharpPlus/Discord.NET.
 
