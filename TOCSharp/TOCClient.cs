@@ -162,7 +162,7 @@ namespace TOCSharp
                         {
                             ChatID = roomID,
                             Name = roomName
-                        });
+                        }).ContinueWith(x => Console.WriteLine("Exception on ChatJoined: " + x.Exception));;
                     }
                 }
                 else if (command == "CHAT_UPDATE_BUDDY")
@@ -179,7 +179,7 @@ namespace TOCSharp
                             RoomID = roomID,
                             IsOnline = isOnline,
                             Buddies = buddies
-                        });
+                        }).ContinueWith(x => Console.WriteLine("Exception on ChatBuddyUpdate: " + x.Exception));;
                     }
                 }
                 else if (command == "ERROR")
@@ -189,7 +189,8 @@ namespace TOCSharp
 
                     if (this.ErrorReceived != null)
                     {
-                        await this.ErrorReceived.Invoke(this, error);
+                        await this.ErrorReceived.Invoke(this, error)
+                                  .ContinueWith(x => Console.WriteLine("Exception on ErrorReceived: " + x.Exception));;
                     }
                 }
             }
@@ -211,7 +212,7 @@ namespace TOCSharp
                     Sender = sender,
                     Whisper = whisper,
                     Message = message
-                });
+                }).ContinueWith(x => Console.WriteLine("Exception on ChatMessageReceived: " + x.Exception));
             }
         }
 
@@ -227,7 +228,7 @@ namespace TOCSharp
                 {
                     Sender = username,
                     Message = message
-                });
+                }).ContinueWith(x => Console.WriteLine("Exception on IMReceived: " + x.Exception));;
             }
         }
 
@@ -270,7 +271,6 @@ namespace TOCSharp
 
         public async Task JoinChatAsync(string roomName, int exchange = 4)
         {
-            await this.SendCommandAsync("toc_set_info", "Yo waddup!");
             await this.SendCommandAsync("toc_chat_join", exchange.ToString(), roomName);
         }
 
