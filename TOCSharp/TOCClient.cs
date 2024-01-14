@@ -46,6 +46,22 @@ namespace TOCSharp
 
         private async Task PacketReceived(object sender, FLAPPacket args)
         {
+            try
+            {
+                await this.ParsePacket(args);
+            }
+            catch (TaskCanceledException)
+            {
+                // continue;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception: " + e);
+            }
+        }
+
+        private async Task ParsePacket(FLAPPacket args)
+        {
             if (args.Frame == FLAPPacket.FRAME_SIGNON)
             {
                 string normalized = Utils.NormalizeScreenname(this.Screenname);
@@ -74,6 +90,7 @@ namespace TOCSharp
             {
                 string data = Encoding.UTF8.GetString(args.Data);
 
+                Console.WriteLine(data);
                 string command = data[..data.IndexOf(':')];
 
                 if (command == "SIGN_ON")
@@ -162,7 +179,8 @@ namespace TOCSharp
                         {
                             ChatID = roomID,
                             Name = roomName
-                        }).ContinueWith(x => Console.WriteLine("Exception on ChatJoined: " + x.Exception), TaskContinuationOptions.OnlyOnFaulted);
+                        }).ContinueWith(x => Console.WriteLine("Exception on ChatJoined: " + x.Exception),
+                                        TaskContinuationOptions.OnlyOnFaulted);
                     }
                 }
                 else if (command == "CHAT_UPDATE_BUDDY")
@@ -179,7 +197,9 @@ namespace TOCSharp
                             RoomID = roomID,
                             IsOnline = isOnline,
                             Buddies = buddies
-                        }).ContinueWith(x => Console.WriteLine("Exception on ChatBuddyUpdate: " + x.Exception), TaskContinuationOptions.OnlyOnFaulted);;
+                        }).ContinueWith(x => Console.WriteLine("Exception on ChatBuddyUpdate: " + x.Exception),
+                                        TaskContinuationOptions.OnlyOnFaulted);
+                        ;
                     }
                 }
                 else if (command == "ERROR")
@@ -190,7 +210,9 @@ namespace TOCSharp
                     if (this.ErrorReceived != null)
                     {
                         await this.ErrorReceived.Invoke(this, error)
-                                  .ContinueWith(x => Console.WriteLine("Exception on ErrorReceived: " + x.Exception), TaskContinuationOptions.OnlyOnFaulted);;
+                                  .ContinueWith(x => Console.WriteLine("Exception on ErrorReceived: " + x.Exception),
+                                                TaskContinuationOptions.OnlyOnFaulted);
+                        ;
                     }
                 }
             }
@@ -212,7 +234,8 @@ namespace TOCSharp
                     Sender = sender,
                     Whisper = whisper,
                     Message = message
-                }).ContinueWith(x => Console.WriteLine("Exception on ChatMessageReceived: " + x.Exception), TaskContinuationOptions.OnlyOnFaulted);
+                }).ContinueWith(x => Console.WriteLine("Exception on ChatMessageReceived: " + x.Exception),
+                                TaskContinuationOptions.OnlyOnFaulted);
             }
         }
 
@@ -228,7 +251,8 @@ namespace TOCSharp
                 {
                     Sender = username,
                     Message = message
-                }).ContinueWith(x => Console.WriteLine("Exception on IMReceived: " + x.Exception), TaskContinuationOptions.OnlyOnFaulted);;
+                }).ContinueWith(x => Console.WriteLine("Exception on IMReceived: " + x.Exception), TaskContinuationOptions.OnlyOnFaulted);
+                ;
             }
         }
 
