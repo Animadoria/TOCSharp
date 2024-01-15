@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using TOCSharp.Models;
@@ -21,6 +22,7 @@ namespace TOCSharp
         public event AsyncEventHandler<ChatRoom>? ChatJoined;
         public event AsyncEventHandler<ChatBuddyUpdate>? ChatBuddyUpdate;
         public event AsyncEventHandler<InstantMessage>? IMReceived;
+        public event AsyncEventHandler<ChatInvite>? ChatInviteReceived;
         public event AsyncEventHandler<string>? ErrorReceived;
         public event AsyncEventHandler? Disconnected;
 
@@ -90,7 +92,7 @@ namespace TOCSharp
             {
                 string data = Encoding.UTF8.GetString(args.Data);
 
-                Console.WriteLine(data);
+                //Console.WriteLine(data);
                 string command = data[..data.IndexOf(':')];
 
                 if (command == "SIGN_ON")
@@ -199,6 +201,10 @@ namespace TOCSharp
                         });
                     }
                 }
+                else if (command == "CHAT_INVITE")
+                {
+                    await this.ParseChatInvite(data);
+                }
                 else if (command == "ERROR")
                 {
                     string[] split = data.Split(':');
@@ -209,6 +215,26 @@ namespace TOCSharp
                         await this.ErrorReceived.Invoke(this, error);
                     }
                 }
+            }
+        }
+
+        private async Task ParseChatInvite(string data)
+        {
+            string[] split = data.Split(':', 5);
+            string roomName = split[1];
+            string roomID = split[2];
+            string sender = split[3];
+            string message = split[4];
+
+            if (this.ChatInviteReceived != null)
+            {
+                await this.ChatInviteReceived.Invoke(this, new ChatInvite
+                {
+                    RoomName = roomName,
+                    RoomID = roomID,
+                    Sender = sender,
+                    Message = message
+                });
             }
         }
 
@@ -305,6 +331,13 @@ namespace TOCSharp
         public async Task SendIMAsync(string message, string sender)
         {
             await this.SendCommandAsync("toc2_send_im_enc", sender, "F", "U", "en", message);
+        }
+
+        public async Task SendChatInviteAsync(string roomID, string message, params string[] screennames)
+        {
+            List<string> param = new List<string> { "toc_chat_invite", roomID, message };
+            param.AddRange(screennames);
+            await this.SendCommandAsync(param.ToArray());
         }
 
         public async Task DisconnectAsync()
