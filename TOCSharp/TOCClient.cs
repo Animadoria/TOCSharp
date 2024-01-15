@@ -335,6 +335,11 @@ namespace TOCSharp
 
         public async Task SendChatInviteAsync(string roomID, string message, params string[] screennames)
         {
+            if (screennames.Length == 0)
+            {
+                return;
+            }
+
             List<string> param = new List<string> { "toc_chat_invite", roomID, message };
             param.AddRange(screennames);
             await this.SendCommandAsync(param.ToArray());
