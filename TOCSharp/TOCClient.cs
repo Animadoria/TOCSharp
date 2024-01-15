@@ -19,10 +19,10 @@ namespace TOCSharp
         public event AsyncEventHandler<string>? NickReceived;
         public event AsyncEventHandler<BuddyInfo>? BuddyInfoReceived;
         public event AsyncEventHandler<ChatMessage>? ChatMessageReceived;
+        public event AsyncEventHandler<ChatInvite>? ChatInviteReceived;
         public event AsyncEventHandler<ChatRoom>? ChatJoined;
         public event AsyncEventHandler<ChatBuddyUpdate>? ChatBuddyUpdate;
         public event AsyncEventHandler<InstantMessage>? IMReceived;
-        public event AsyncEventHandler<ChatInvite>? ChatInviteReceived;
         public event AsyncEventHandler<string>? ErrorReceived;
         public event AsyncEventHandler? Disconnected;
 
@@ -52,13 +52,10 @@ namespace TOCSharp
             {
                 await this.ParsePacket(args);
             }
-            catch (TaskCanceledException)
-            {
-                // continue;
-            }
+
             catch (Exception e)
             {
-                Console.WriteLine("Exception: " + e);
+                System.Diagnostics.Debug.WriteLine("Exception: " + e);
             }
         }
 
@@ -92,7 +89,7 @@ namespace TOCSharp
             {
                 string data = Encoding.UTF8.GetString(args.Data);
 
-                //Console.WriteLine(data);
+                //System.Diagnostics.Debug.WriteLine(data);
                 string command = data[..data.IndexOf(':')];
 
                 if (command == "SIGN_ON")
@@ -218,26 +215,6 @@ namespace TOCSharp
             }
         }
 
-        private async Task ParseChatInvite(string data)
-        {
-            string[] split = data.Split(':', 5);
-            string roomName = split[1];
-            string roomID = split[2];
-            string sender = split[3];
-            string message = split[4];
-
-            if (this.ChatInviteReceived != null)
-            {
-                await this.ChatInviteReceived.Invoke(this, new ChatInvite
-                {
-                    RoomName = roomName,
-                    RoomID = roomID,
-                    Sender = sender,
-                    Message = message
-                });
-            }
-        }
-
         private async Task ParseChatInEnc(string data)
         {
             string[] split = data.Split(':', 7);
@@ -253,6 +230,25 @@ namespace TOCSharp
                     RoomID = roomID,
                     Sender = sender,
                     Whisper = whisper,
+                    Message = message
+                });
+            }
+        }
+        private async Task ParseChatInvite(string data)
+        {
+            string[] split = data.Split(':', 5);
+            string roomName = split[1];
+            string roomID = split[2];
+            string sender = split[3];
+            string message = split[4];
+
+            if (this.ChatInviteReceived != null)
+            {
+                await this.ChatInviteReceived.Invoke(this, new ChatInvite
+                {
+                    RoomName = roomName,
+                    RoomID = roomID,
+                    Sender = sender,
                     Message = message
                 });
             }
@@ -303,12 +299,95 @@ namespace TOCSharp
                     sb.Append(' ');
                 }
             }
-
-            await this.connection.SendPacketAsync(new FLAPPacket
+                await this.connection.SendPacketAsync(new FLAPPacket
             {
                 Frame = FLAPPacket.FRAME_DATA,
                 Data = Encoding.UTF8.GetBytes(sb.Append('\0').ToString())
             });
+        }
+
+        public async Task AddBuddy(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_add_buddy", screenName);
+        }
+
+        public async Task RemoveBuddy(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_remove_buddy", screenName);
+        }
+
+        public async Task AddPermit(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_add_permit", screenName);
+        }
+
+        public async Task AddDeny(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_add_deny", screenName);
+        }
+
+        public async Task ChangePassword(string oldPassword, string newPassword)
+        {
+            if (oldPassword == null || newPassword == null) { return; }
+
+            await this.SendCommandAsync("toc_change_passwd", oldPassword, newPassword);
+        }
+
+        public async Task FormatSN(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_format_nickname", screenName);
+        }
+
+        public async Task GetDirectoryInfo(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_get_dir", screenName);
+        }
+
+        public async Task GetUserInfo(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_get_info", screenName);
+        }
+
+        public async Task GetUserStatus(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_get_status", screenName);
+        }
+
+        public async Task SetCapabilities(string caps)
+        {
+            if (caps == null) { return; }
+
+            await this.SendCommandAsync("toc_set_caps", caps);
+        }
+
+        public async Task SetProfile(string profile)
+        {
+            if (profile == null) { return; }
+
+            await this.SendCommandAsync("toc_set_info", profile);
+        }
+        
+        public async Task WarnSN(string screenName, bool anonymous)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_evil", screenName, anonymous ? "anon" : "norm");
         }
 
         public async Task JoinChatAsync(string roomName, int exchange = 4)
@@ -316,6 +395,32 @@ namespace TOCSharp
             await this.SendCommandAsync("toc_chat_join", exchange.ToString(), roomName);
         }
 
+        public async Task LeaveChatAsync(string roomID)
+        {
+            if (roomID == null) { return; }
+
+            await this.SendCommandAsync("toc_chat_leave", roomID);
+        }
+
+        public async Task AcceptChatInvite(string roomID)
+        {
+            if (roomID == null) { return; }
+
+            await this.SendCommandAsync("toc_chat_accept", roomID);
+        }
+
+        public async Task SendChatInviteAsync(string roomID, string message, params string[] screennames)
+        {
+            if (screennames.Length == 0)
+            {
+                return;
+            }
+
+            List<string> param = new List<string> { "toc_chat_invite", roomID, message };
+            param.AddRange(screennames);
+            await this.SendCommandAsync(param.ToArray());
+        }
+            
         public async Task SendChatMessageAsync(string roomID, string message, string? toWhisper = null)
         {
             if (toWhisper != null)
@@ -333,16 +438,11 @@ namespace TOCSharp
             await this.SendCommandAsync("toc2_send_im_enc", sender, "F", "U", "en", message);
         }
 
-        public async Task SendChatInviteAsync(string roomID, string message, params string[] screennames)
+        public async Task SetAwayMessage(string awayMessage)
         {
-            if (screennames.Length == 0)
-            {
-                return;
-            }
+            //if (awayMessage == null) { return; }
 
-            List<string> param = new List<string> { "toc_chat_invite", roomID, message };
-            param.AddRange(screennames);
-            await this.SendCommandAsync(param.ToArray());
+            await this.SendCommandAsync("toc_set_away", awayMessage);
         }
 
         public async Task DisconnectAsync()
