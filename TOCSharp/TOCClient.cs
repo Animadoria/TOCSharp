@@ -16,13 +16,20 @@ namespace TOCSharp
         private readonly FLAPConnection connection = new FLAPConnection();
 
         public event AsyncEventHandler? SignOnDone;
+        public event AsyncEventHandler<string>? VersionReceived;
         public event AsyncEventHandler<string>? NickReceived;
         public event AsyncEventHandler<BuddyInfo>? BuddyInfoReceived;
         public event AsyncEventHandler<ChatMessage>? ChatMessageReceived;
         public event AsyncEventHandler<ChatInvite>? ChatInviteReceived;
         public event AsyncEventHandler<ChatRoom>? ChatJoined;
+        public event AsyncEventHandler<string>? ChatLeft;
         public event AsyncEventHandler<ChatBuddyUpdate>? ChatBuddyUpdate;
+        public event AsyncEventHandler<ClientEvent>? ClientEvent;
+        public event AsyncEventHandler<Evil>? EvilReceived;
         public event AsyncEventHandler<InstantMessage>? IMReceived;
+        public event AsyncEventHandler<string>? ProfileReceived;
+        public event AsyncEventHandler<bool>? NameFormatSuccess;
+        public event AsyncEventHandler<bool>? PasswordChangeSuccess;
         public event AsyncEventHandler<string>? ErrorReceived;
         public event AsyncEventHandler? Disconnected;
 
@@ -94,6 +101,14 @@ namespace TOCSharp
 
                 if (command == "SIGN_ON")
                 {
+                    string[] split = data.Split(':', 2);
+                    string version = split[1];
+
+                    if (this.VersionReceived != null)
+                    {
+                        await this.VersionReceived.Invoke(this, version);
+                    }
+
                     await this.SendCommandAsync("toc_init_done");
 
                     if (this.SignOnDone != null)
@@ -201,6 +216,92 @@ namespace TOCSharp
                 else if (command == "CHAT_INVITE")
                 {
                     await this.ParseChatInvite(data);
+                }
+                else if (command == "CHAT_LEFT")
+                {
+                    string[] split = data.Split(':', 2);
+                    string chatLeft = split[1];
+
+                    if (this.ChatLeft != null)
+                    {
+                        await this.ChatLeft.Invoke(this, chatLeft);
+                    }
+                }
+                else if (command == "CLIENT_EVENT2")
+                {
+                    string[] split = data.Split(':', 3);
+                    string sender = split[1];
+                    bool isTyping = split[2] == "2";
+
+                    if (this.ClientEvent != null)
+                    {
+                        await this.ClientEvent.Invoke(this, new ClientEvent()
+                        {
+                            Sender = sender,
+                            IsTyping = isTyping
+                        });
+                    }
+                }
+                else if (command == "EVILED")
+                {
+                    string[] split = data.Split(':', 3);
+                    string newEvil = split[1];
+                    string eviler = split[2];
+
+                    if (this.EvilReceived != null)
+                    {
+                        await this.EvilReceived.Invoke(this, new Evil()
+                        {
+                            NewEvil = newEvil,
+                            Eviler = eviler
+                        });                            
+                    }
+                }
+                else if (command == "GOTO_URL")
+                {
+                    string[] split = data.Split(':', 3);
+                    string profile = split[2];
+                    string profileURL = "http://" + FLAPConnection.DEFAULT_HOST + ":" + FLAPConnection.DEFAULT_PORT + "/" + profile;
+
+                    if (this.ProfileReceived != null)
+                    {
+                        await this.ProfileReceived.Invoke(this, profileURL);
+                    }
+                }
+                else if (command == "ADMIN_NICK_STATUS")
+                {
+                    string[] split = data.Split(':', 2);
+                    string status = split[1];
+
+                    if (this.NameFormatSuccess != null)
+                    {
+                        if (status == "0")
+                        {
+                            await this.NameFormatSuccess.Invoke(this, true);
+                        }
+                        else
+                        {
+                            await this.NameFormatSuccess.Invoke(this, false);
+                        }
+                    }
+                }
+                else if (command == "ADMIN_PASSWD_STATUS")
+                {
+                    string[] split = data.Split(':', 2);
+                    string status = split[1];
+
+                    if (this.PasswordChangeSuccess != null)
+                    {
+                        if (status == "0")
+                        {
+                            await this.PasswordChangeSuccess.Invoke(this, true);
+                        }
+                        else
+                        {
+                            await this.PasswordChangeSuccess.Invoke(this, false);
+                        }
+                    }
+
                 }
                 else if (command == "ERROR")
                 {
@@ -433,15 +534,20 @@ namespace TOCSharp
             }
         }
 
-        public async Task SendIMAsync(string message, string sender)
-        {
-            await this.SendCommandAsync("toc2_send_im_enc", sender, "F", "U", "en", message);
+        public async Task SendIMAsync(string screenName, string message, bool autoResponse = false)
+        {            
+            if (autoResponse == true)
+            {
+                await this.SendCommandAsync("toc2_send_im_enc", screenName, "F", "U", "en", message, "auto");
+            }
+            else
+            {
+                await this.SendCommandAsync("toc2_send_im_enc", screenName, "F", "U", "en", message);
+            }
         }
 
         public async Task SetAwayMessage(string awayMessage)
         {
-            //if (awayMessage == null) { return; }
-
             await this.SendCommandAsync("toc_set_away", awayMessage);
         }
 
