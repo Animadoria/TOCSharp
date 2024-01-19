@@ -17,6 +17,10 @@ namespace TOCSharp
 
         public event AsyncEventHandler? SignOnDone;
         public event AsyncEventHandler<string>? VersionReceived;
+        public event AsyncEventHandler<int>? BuddyListPrivacyMode;
+        public event AsyncEventHandler<string>? BuddyListPermit;
+        public event AsyncEventHandler<string>? BuddyListDeny;
+        public event AsyncEventHandler<Buddy>? BuddyListBuddy;
         public event AsyncEventHandler<string>? NickReceived;
         public event AsyncEventHandler<BuddyInfo>? BuddyInfoReceived;
         public event AsyncEventHandler<ChatMessage>? ChatMessageReceived;
@@ -109,7 +113,62 @@ namespace TOCSharp
                         await this.VersionReceived.Invoke(this, version);
                     }
 
+                    /* moved to the end of CONFIG2
                     await this.SendCommandAsync("toc_init_done");
+
+                    if (this.SignOnDone != null)
+                    {
+                        await this.SignOnDone.Invoke(this, EventArgs.Empty);
+                    }
+                    */
+                }
+                else if (command == "CONFIG2")
+                {
+                    string[] split = data.Split('\n');
+                    int groups = 0;
+                    string lastGroup = "";
+
+                    for (int i = 0; i < split.GetUpperBound(0) - 1; i++)
+                    {
+                        switch (split[i].Substring(0,1))
+                        {
+                            case "m": //PRIVACY
+                                if (this.BuddyListPrivacyMode != null)
+                                {
+                                    await this.BuddyListPrivacyMode.Invoke(this,int.Parse(split[i][2..]));
+                                }
+                                break;
+                            case "p": //PERMIT
+                                if (this.BuddyListPermit != null)
+                                {
+                                    await this.BuddyListPermit.Invoke(this, split[i][2..]);
+                                }
+                                break;
+                            case "d": //DENY
+                                if (this.BuddyListDeny != null)
+                                {
+                                    await this.BuddyListDeny.Invoke(this, split[i][2..]);
+                                }
+                                break;
+                            case "g": //GROUP
+                                groups++;
+
+                                lastGroup = split[i][2..];
+                                break;
+                            case "b": //BUDDY
+                                if (this.BuddyListBuddy != null)
+                                {
+                                    await this.BuddyListBuddy.Invoke(this, new Buddy()
+                                    {
+                                        Group = lastGroup,
+                                        ScreenName = split[i][2..]
+                                    });
+                                }
+                                break;
+                        }
+                    }
+                    await this.SendCommandAsync("toc_init_done");
+                    await this.SendCommandAsync("toc_set_caps", "748F2420628711D18222444553540000"); //Chat Capabilities
 
                     if (this.SignOnDone != null)
                     {
@@ -126,7 +185,7 @@ namespace TOCSharp
                         await this.NickReceived.Invoke(this, nick);
                     }
                 }
-                else if (command == "UPDATE_BUDDY")
+                else if (command == "UPDATE_BUDDY2")
                 {
                     string[] split = data.Split(':', 8);
                     string name = split[1];
@@ -159,7 +218,7 @@ namespace TOCSharp
                         userClass |= UserClass.Unavailable;
                     }
 
-                    BuddyInfo info = new BuddyInfo
+                    BuddyInfo info = new BuddyInfo()
                     {
                         Screenname = name,
                         Online = online,
@@ -254,7 +313,7 @@ namespace TOCSharp
                         {
                             NewEvil = newEvil,
                             Eviler = eviler
-                        });                            
+                        });
                     }
                 }
                 else if (command == "GOTO_URL")
@@ -535,7 +594,7 @@ namespace TOCSharp
         }
 
         public async Task SendIMAsync(string screenName, string message, bool autoResponse = false)
-        {            
+        {
             if (autoResponse == true)
             {
                 await this.SendCommandAsync("toc2_send_im_enc", screenName, "F", "U", "en", message, "auto");
