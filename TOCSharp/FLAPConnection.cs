@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
@@ -9,6 +10,8 @@ namespace TOCSharp
 {
     public class FLAPConnection
     {
+        public const int READ_SIZE = 0x800;
+
         public const string DEFAULT_HOST = "testpea-n01a.blue.nina.chat";
         public const ushort DEFAULT_PORT = 9898;
 
@@ -55,16 +58,17 @@ namespace TOCSharp
         {
             while (this.Connected)
             {
+                byte[]? pooled = null;
                 try
                 {
-                    byte[] bytes = new byte[2048];
-                    int bytesReceived = await this.socket.ReceiveAsync(bytes, SocketFlags.None);
+                    pooled = ArrayPool<byte>.Shared.Rent(READ_SIZE);
+                    int bytesReceived = await this.socket.ReceiveAsync(pooled, SocketFlags.None);
 
                     if (bytesReceived <= 0)
                     {
                         break;
                     }
-                    bytes = bytes[..bytesReceived];
+                    var bytes = pooled[..bytesReceived];
 
                     this.buffer = this.buffer.Length != 0 ? ByteTools.Concatenate(this.buffer, bytes) : bytes;
 
@@ -72,12 +76,14 @@ namespace TOCSharp
                     {
                         if (this.buffer.Length < 6)
                         {
+                            ArrayPool<byte>.Shared.Return(pooled, true);
                             break;
                         }
 
                         byte marker = this.buffer[0];
                         if (marker != 0x2A)
                         {
+                            ArrayPool<byte>.Shared.Return(pooled, true);
                             break;
                         }
 
@@ -87,6 +93,7 @@ namespace TOCSharp
 
                         if (this.buffer.Length < length + 6)
                         {
+                            ArrayPool<byte>.Shared.Return(pooled, true);
                             continue;
                         }
 
@@ -102,9 +109,15 @@ namespace TOCSharp
                         this.buffer = this.buffer[(length + 6)..];
                     }
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
+                    Console.WriteLine("Exception: " + e);
+                    ArrayPool<byte>.Shared.Return(pooled, true);
                     break;
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(pooled, true);
                 }
             }
 
