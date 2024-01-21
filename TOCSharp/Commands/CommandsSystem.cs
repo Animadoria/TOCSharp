@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Web;
 using TOCSharp.Commands.Attributes;
 using TOCSharp.Commands.Converters;
 using TOCSharp.Models;
@@ -113,7 +114,12 @@ namespace TOCSharp.Commands
 
                 foreach (string name in cmd.Names)
                 {
-                    this.Commands[name] = info;
+                    string n = name;
+                    if (!this.Settings.CaseSensitive)
+                    {
+                        n = name.ToLower();
+                    }
+                    this.Commands[n] = info;
                 }
             }
         }
@@ -123,7 +129,7 @@ namespace TOCSharp.Commands
             if (Utils.NormalizeScreenname(args.Sender) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
             string msg = Utils.StripHTML(args.Message);
 
-            var ctx = new CommandContext()
+            CommandContext ctx = new CommandContext()
             {
                 IsChat = false,
                 IsWhisper = false,
@@ -141,7 +147,7 @@ namespace TOCSharp.Commands
             if (Utils.NormalizeScreenname(args.Sender) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
             string msg = Utils.StripHTML(args.Message);
 
-            var ctx = new CommandContext()
+            CommandContext ctx = new CommandContext()
             {
                 IsChat = true,
                 IsWhisper = args.Whisper,
@@ -156,8 +162,9 @@ namespace TOCSharp.Commands
 
         private async Task RouteCommand(CommandContext ctx)
         {
+            ctx.Message = ctx.Message.Replace("&quot;", "\"");
             string? raw = null;
-            foreach (var prefix in this.Settings.StringPrefixes)
+            foreach (string? prefix in this.Settings.StringPrefixes)
             {
                 if (ctx.Message.StartsWith(prefix))
                 {
@@ -171,7 +178,14 @@ namespace TOCSharp.Commands
             int pos = 0;
             string? command = raw.ExtractNextArgument(ref pos, this.Settings.QuotationMarks);
 
-            if (command == null || !this.Commands.TryGetValue(command, out CommandInfo? info)) return;
+            if (command == null) return;
+
+            if (!this.Settings.CaseSensitive)
+            {
+                command = command.ToLower();
+            }
+
+            if (!this.Commands.TryGetValue(command, out CommandInfo? info)) return;
 
             List<object?> arguments = new List<object?> { ctx };
 
