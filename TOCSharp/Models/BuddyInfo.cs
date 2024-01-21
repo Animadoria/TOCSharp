@@ -17,7 +17,10 @@ namespace TOCSharp.Models
             this.Screenname = screenname;
         }
 
-
+        public override int GetHashCode()
+        {
+            return this.Screenname.GetHashCode();
+        }
     }
 
     [Flags]
