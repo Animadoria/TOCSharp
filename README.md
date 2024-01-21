@@ -1,10 +1,6 @@
-# TOCSharpest
-
-Expanding upon TOCSharp's TOCClient to allow for a more complete client.
-
 # TOCSharp
 
-Quick TOC2 client Animadoria made. Works on [the NINA server](https://nina.chat). 
+Quick TOC2 client I made. Works on [the NINA server](https://nina.chat). 
 
 Has a command system inspired by DSharpPlus/Discord.NET.
 
