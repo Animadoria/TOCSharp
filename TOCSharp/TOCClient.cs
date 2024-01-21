@@ -16,13 +16,24 @@ namespace TOCSharp
         private readonly FLAPConnection connection = new FLAPConnection();
 
         public event AsyncEventHandler? SignOnDone;
+        public event AsyncEventHandler<string>? VersionReceived;
+        public event AsyncEventHandler<int>? BuddyListPrivacyMode;
+        public event AsyncEventHandler<string>? BuddyListPermit;
+        public event AsyncEventHandler<string>? BuddyListDeny;
+        public event AsyncEventHandler<Buddy>? BuddyListBuddy;
         public event AsyncEventHandler<string>? NickReceived;
         public event AsyncEventHandler<BuddyInfo>? BuddyInfoReceived;
         public event AsyncEventHandler<ChatMessage>? ChatMessageReceived;
-        public event AsyncEventHandler<ChatRoom>? ChatJoined;
-        public event AsyncEventHandler<ChatBuddyUpdate>? ChatBuddyUpdate;
-        public event AsyncEventHandler<InstantMessage>? IMReceived;
         public event AsyncEventHandler<ChatInvite>? ChatInviteReceived;
+        public event AsyncEventHandler<ChatRoom>? ChatJoined;
+        public event AsyncEventHandler<string>? ChatLeft;
+        public event AsyncEventHandler<ChatBuddyUpdate>? ChatBuddyUpdate;
+        public event AsyncEventHandler<ClientEvent>? ClientEvent;
+        public event AsyncEventHandler<Evil>? EvilReceived;
+        public event AsyncEventHandler<InstantMessage>? IMReceived;
+        public event AsyncEventHandler<string>? ProfileReceived;
+        public event AsyncEventHandler<bool>? NameFormatSuccess;
+        public event AsyncEventHandler<bool>? PasswordChangeSuccess;
         public event AsyncEventHandler<string>? ErrorReceived;
         public event AsyncEventHandler? Disconnected;
 
@@ -52,13 +63,10 @@ namespace TOCSharp
             {
                 await this.ParsePacket(args);
             }
-            catch (TaskCanceledException)
-            {
-                // continue;
-            }
+
             catch (Exception e)
             {
-                Console.WriteLine("Exception: " + e);
+                System.Diagnostics.Debug.WriteLine("Exception: " + e);
             }
         }
 
@@ -92,12 +100,75 @@ namespace TOCSharp
             {
                 string data = Encoding.UTF8.GetString(args.Data);
 
-                //Console.WriteLine(data);
+                //System.Diagnostics.Debug.WriteLine(data);
                 string command = data[..data.IndexOf(':')];
 
                 if (command == "SIGN_ON")
                 {
+                    string[] split = data.Split(':', 2);
+                    string version = split[1];
+
+                    if (this.VersionReceived != null)
+                    {
+                        await this.VersionReceived.Invoke(this, version);
+                    }
+
+                    /* moved to the end of CONFIG2
                     await this.SendCommandAsync("toc_init_done");
+
+                    if (this.SignOnDone != null)
+                    {
+                        await this.SignOnDone.Invoke(this, EventArgs.Empty);
+                    }
+                    */
+                }
+                else if (command == "CONFIG2")
+                {
+                    string[] split = data.Split('\n');
+                    int groups = 0;
+                    string lastGroup = "";
+
+                    for (int i = 0; i < split.GetUpperBound(0) - 1; i++)
+                    {
+                        switch (split[i].Substring(0,1))
+                        {
+                            case "m": //PRIVACY
+                                if (this.BuddyListPrivacyMode != null)
+                                {
+                                    await this.BuddyListPrivacyMode.Invoke(this,int.Parse(split[i][2..]));
+                                }
+                                break;
+                            case "p": //PERMIT
+                                if (this.BuddyListPermit != null)
+                                {
+                                    await this.BuddyListPermit.Invoke(this, split[i][2..]);
+                                }
+                                break;
+                            case "d": //DENY
+                                if (this.BuddyListDeny != null)
+                                {
+                                    await this.BuddyListDeny.Invoke(this, split[i][2..]);
+                                }
+                                break;
+                            case "g": //GROUP
+                                groups++;
+
+                                lastGroup = split[i][2..];
+                                break;
+                            case "b": //BUDDY
+                                if (this.BuddyListBuddy != null)
+                                {
+                                    await this.BuddyListBuddy.Invoke(this, new Buddy()
+                                    {
+                                        Group = lastGroup,
+                                        ScreenName = split[i][2..]
+                                    });
+                                }
+                                break;
+                        }
+                    }
+                    await this.SendCommandAsync("toc_init_done");
+                    await this.SendCommandAsync("toc_set_caps", "748F2420628711D18222444553540000"); //Chat Capabilities
 
                     if (this.SignOnDone != null)
                     {
@@ -114,7 +185,7 @@ namespace TOCSharp
                         await this.NickReceived.Invoke(this, nick);
                     }
                 }
-                else if (command == "UPDATE_BUDDY")
+                else if (command == "UPDATE_BUDDY2")
                 {
                     string[] split = data.Split(':', 8);
                     string name = split[1];
@@ -147,7 +218,7 @@ namespace TOCSharp
                         userClass |= UserClass.Unavailable;
                     }
 
-                    BuddyInfo info = new BuddyInfo
+                    BuddyInfo info = new BuddyInfo()
                     {
                         Screenname = name,
                         Online = online,
@@ -205,6 +276,92 @@ namespace TOCSharp
                 {
                     await this.ParseChatInvite(data);
                 }
+                else if (command == "CHAT_LEFT")
+                {
+                    string[] split = data.Split(':', 2);
+                    string chatLeft = split[1];
+
+                    if (this.ChatLeft != null)
+                    {
+                        await this.ChatLeft.Invoke(this, chatLeft);
+                    }
+                }
+                else if (command == "CLIENT_EVENT2")
+                {
+                    string[] split = data.Split(':', 3);
+                    string sender = split[1];
+                    bool isTyping = split[2] == "2";
+
+                    if (this.ClientEvent != null)
+                    {
+                        await this.ClientEvent.Invoke(this, new ClientEvent()
+                        {
+                            Sender = sender,
+                            IsTyping = isTyping
+                        });
+                    }
+                }
+                else if (command == "EVILED")
+                {
+                    string[] split = data.Split(':', 3);
+                    string newEvil = split[1];
+                    string eviler = split[2];
+
+                    if (this.EvilReceived != null)
+                    {
+                        await this.EvilReceived.Invoke(this, new Evil()
+                        {
+                            NewEvil = newEvil,
+                            Eviler = eviler
+                        });
+                    }
+                }
+                else if (command == "GOTO_URL")
+                {
+                    string[] split = data.Split(':', 3);
+                    string profile = split[2];
+                    string profileURL = "http://" + FLAPConnection.DEFAULT_HOST + ":" + FLAPConnection.DEFAULT_PORT + "/" + profile;
+
+                    if (this.ProfileReceived != null)
+                    {
+                        await this.ProfileReceived.Invoke(this, profileURL);
+                    }
+                }
+                else if (command == "ADMIN_NICK_STATUS")
+                {
+                    string[] split = data.Split(':', 2);
+                    string status = split[1];
+
+                    if (this.NameFormatSuccess != null)
+                    {
+                        if (status == "0")
+                        {
+                            await this.NameFormatSuccess.Invoke(this, true);
+                        }
+                        else
+                        {
+                            await this.NameFormatSuccess.Invoke(this, false);
+                        }
+                    }
+                }
+                else if (command == "ADMIN_PASSWD_STATUS")
+                {
+                    string[] split = data.Split(':', 2);
+                    string status = split[1];
+
+                    if (this.PasswordChangeSuccess != null)
+                    {
+                        if (status == "0")
+                        {
+                            await this.PasswordChangeSuccess.Invoke(this, true);
+                        }
+                        else
+                        {
+                            await this.PasswordChangeSuccess.Invoke(this, false);
+                        }
+                    }
+
+                }
                 else if (command == "ERROR")
                 {
                     string[] split = data.Split(':');
@@ -215,26 +372,6 @@ namespace TOCSharp
                         await this.ErrorReceived.Invoke(this, error);
                     }
                 }
-            }
-        }
-
-        private async Task ParseChatInvite(string data)
-        {
-            string[] split = data.Split(':', 5);
-            string roomName = split[1];
-            string roomID = split[2];
-            string sender = split[3];
-            string message = split[4];
-
-            if (this.ChatInviteReceived != null)
-            {
-                await this.ChatInviteReceived.Invoke(this, new ChatInvite
-                {
-                    RoomName = roomName,
-                    RoomID = roomID,
-                    Sender = sender,
-                    Message = message
-                });
             }
         }
 
@@ -253,6 +390,25 @@ namespace TOCSharp
                     RoomID = roomID,
                     Sender = sender,
                     Whisper = whisper,
+                    Message = message
+                });
+            }
+        }
+        private async Task ParseChatInvite(string data)
+        {
+            string[] split = data.Split(':', 5);
+            string roomName = split[1];
+            string roomID = split[2];
+            string sender = split[3];
+            string message = split[4];
+
+            if (this.ChatInviteReceived != null)
+            {
+                await this.ChatInviteReceived.Invoke(this, new ChatInvite
+                {
+                    RoomName = roomName,
+                    RoomID = roomID,
+                    Sender = sender,
                     Message = message
                 });
             }
@@ -303,12 +459,95 @@ namespace TOCSharp
                     sb.Append(' ');
                 }
             }
-
-            await this.connection.SendPacketAsync(new FLAPPacket
+                await this.connection.SendPacketAsync(new FLAPPacket
             {
                 Frame = FLAPPacket.FRAME_DATA,
                 Data = Encoding.UTF8.GetBytes(sb.Append('\0').ToString())
             });
+        }
+
+        public async Task AddBuddy(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_add_buddy", screenName);
+        }
+
+        public async Task RemoveBuddy(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_remove_buddy", screenName);
+        }
+
+        public async Task AddPermit(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_add_permit", screenName);
+        }
+
+        public async Task AddDeny(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_add_deny", screenName);
+        }
+
+        public async Task ChangePassword(string oldPassword, string newPassword)
+        {
+            if (oldPassword == null || newPassword == null) { return; }
+
+            await this.SendCommandAsync("toc_change_passwd", oldPassword, newPassword);
+        }
+
+        public async Task FormatSN(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_format_nickname", screenName);
+        }
+
+        public async Task GetDirectoryInfo(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_get_dir", screenName);
+        }
+
+        public async Task GetUserInfo(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_get_info", screenName);
+        }
+
+        public async Task GetUserStatus(string screenName)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_get_status", screenName);
+        }
+
+        public async Task SetCapabilities(string caps)
+        {
+            if (caps == null) { return; }
+
+            await this.SendCommandAsync("toc_set_caps", caps);
+        }
+
+        public async Task SetProfile(string profile)
+        {
+            if (profile == null) { return; }
+
+            await this.SendCommandAsync("toc_set_info", profile);
+        }
+        
+        public async Task WarnSN(string screenName, bool anonymous)
+        {
+            if (screenName == null) { return; }
+
+            await this.SendCommandAsync("toc_evil", screenName, anonymous ? "anon" : "norm");
         }
 
         public async Task JoinChatAsync(string roomName, int exchange = 4)
@@ -316,21 +555,18 @@ namespace TOCSharp
             await this.SendCommandAsync("toc_chat_join", exchange.ToString(), roomName);
         }
 
-        public async Task SendChatMessageAsync(string roomID, string message, string? toWhisper = null)
+        public async Task LeaveChatAsync(string roomID)
         {
-            if (toWhisper != null)
-            {
-                await this.SendCommandAsync("toc_chat_whisper_enc", roomID, "U", toWhisper, message);
-            }
-            else
-            {
-                await this.SendCommandAsync("toc_chat_send_enc", roomID, "U", message);
-            }
+            if (roomID == null) { return; }
+
+            await this.SendCommandAsync("toc_chat_leave", roomID);
         }
 
-        public async Task SendIMAsync(string message, string sender)
+        public async Task AcceptChatInvite(string roomID)
         {
-            await this.SendCommandAsync("toc2_send_im_enc", sender, "F", "U", "en", message);
+            if (roomID == null) { return; }
+
+            await this.SendCommandAsync("toc_chat_accept", roomID);
         }
 
         public async Task SendChatInviteAsync(string roomID, string message, params string[] screennames)
@@ -343,6 +579,35 @@ namespace TOCSharp
             List<string> param = new List<string> { "toc_chat_invite", roomID, message };
             param.AddRange(screennames);
             await this.SendCommandAsync(param.ToArray());
+        }
+            
+        public async Task SendChatMessageAsync(string roomID, string message, string? toWhisper = null)
+        {
+            if (toWhisper != null)
+            {
+                await this.SendCommandAsync("toc_chat_whisper_enc", roomID, "U", toWhisper, message);
+            }
+            else
+            {
+                await this.SendCommandAsync("toc_chat_send_enc", roomID, "U", message);
+            }
+        }
+
+        public async Task SendIMAsync(string screenName, string message, bool autoResponse = false)
+        {
+            if (autoResponse == true)
+            {
+                await this.SendCommandAsync("toc2_send_im_enc", screenName, "F", "U", "en", message, "auto");
+            }
+            else
+            {
+                await this.SendCommandAsync("toc2_send_im_enc", screenName, "F", "U", "en", message);
+            }
+        }
+
+        public async Task SetAwayMessage(string awayMessage)
+        {
+            await this.SendCommandAsync("toc_set_away", awayMessage);
         }
 
         public async Task DisconnectAsync()
