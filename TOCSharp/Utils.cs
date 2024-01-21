@@ -6,20 +6,39 @@ using HtmlAgilityPack;
 
 namespace TOCSharp
 {
+    /// <summary>
+    /// Miscellaneous utilities for TOC
+    /// </summary>
     public static class Utils
     {
+        /// <summary>
+        /// Normalizes a screenname
+        /// </summary>
+        /// <param name="screenname">Raw username</param>
+        /// <returns>Normalized screenname</returns>
         public static string NormalizeScreenname(string screenname)
         {
-            return screenname.Replace(" ", "")
-                             .Replace(" ", "").ToLowerInvariant();
+            return screenname.Replace(" ", "").ToLowerInvariant();
         }
 
-        public static byte[] XorArray(string password, byte[] xorKey)
+        /// <summary>
+        /// XORes a password with a key
+        /// </summary>
+        /// <param name="password">Password</param>
+        /// <param name="xorKey">XOR Key</param>
+        /// <returns>XORed password as byte[]</returns>
+        internal static byte[] XorArray(string password, byte[] xorKey)
         {
             return XorArray(Encoding.UTF8.GetBytes(password), xorKey);
         }
 
-        public static byte[] XorArray(byte[] password, byte[] xorKey)
+        /// <summary>
+        /// XORes a password with a key
+        /// </summary>
+        /// <param name="password">Password</param>
+        /// <param name="xorKey">XOR Key</param>
+        /// <returns>XORed password as byte[]</returns>
+        internal static byte[] XorArray(byte[] password, byte[] xorKey)
         {
             byte[] result = new byte[password.Length];
 
@@ -52,6 +71,11 @@ namespace TOCSharp
             return c - a + b + 0x4458600;
         }
 
+        /// <summary>
+        /// Strips all HTML
+        /// </summary>
+        /// <param name="original">Original HTML string</param>
+        /// <returns>String without HTML</returns>
         public static string StripHTML(string original)
         {
             HtmlDocument doc = new HtmlDocument();
@@ -59,6 +83,13 @@ namespace TOCSharp
             return doc.DocumentNode.InnerText;
         }
 
+        /// <summary>
+        /// Extracts next argument
+        /// </summary>
+        /// <param name="str">String</param>
+        /// <param name="startPos">Starting position</param>
+        /// <param name="quoteChars">Strings to quote</param>
+        /// <returns>Next argument, null if doesn't exist</returns>
         internal static string? ExtractNextArgument(this string str, ref int startPos, char[] quoteChars)
         {
             if (string.IsNullOrWhiteSpace(str))
@@ -162,6 +193,13 @@ namespace TOCSharp
             return startPos != startPosition ? str.Substring(startPosition).CleanupString(removeIndices) : null;
         }
 
+
+        /// <summary>
+        /// Cleans up string
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="indices"></param>
+        /// <returns></returns>
         private static string CleanupString(this string s, IList<int> indices)
         {
             if (!indices.Any())

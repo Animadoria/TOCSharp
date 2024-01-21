@@ -1,18 +1,43 @@
 ﻿using System;
-using System.Buffers.Binary;
 
 namespace TOCSharp
 {
+    /// <summary>
+    /// Base FLAP Packet
+    /// </summary>
     public class FLAPPacket
     {
+        /// <summary>
+        /// FLAP Marker, always 0x2A (*)
+        /// </summary>
         public const byte FLAP_MARKER = 0x2A;
+
+        /// <summary>
+        /// SIGNON frame
+        /// </summary>
         public const byte FRAME_SIGNON = 0x01;
+
+        /// <summary>
+        /// DATA frame, encapsulates TOC commands
+        /// </summary>
         public const byte FRAME_DATA = 0x02;
+
+        /// <summary>
+        /// ERROR frame, unused for TOC
+        /// </summary>
         public const byte FRAME_ERROR = 0x03;
+
+        /// <summary>
+        /// SIGNOFF frame
+        /// </summary>
         public const byte FRAME_SIGNOFF = 0x04;
+
+        /// <summary>
+        /// KEEPALIVE frame, not required
+        /// </summary>
         public const byte FRAME_KEEPALIVE = 0x05;
 
-        public byte Marker = FLAP_MARKER;
+        public readonly byte Marker = FLAP_MARKER;
         public byte Frame;
         public ushort Sequence;
         public ushort Length;

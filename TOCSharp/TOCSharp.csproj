@@ -4,10 +4,17 @@
         <TargetFramework>netstandard2.1</TargetFramework>
         <ImplicitUsings>disable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Version>1.1.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="HtmlAgilityPack" Version="1.11.57" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="TOCClient.Handlers.cs">
+        <DependentUpon>TOCClient.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
 </Project>

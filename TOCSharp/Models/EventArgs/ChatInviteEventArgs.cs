@@ -1,10 +1,10 @@
 namespace TOCSharp.Models
 {
-    public struct ChatInvite
+    public struct ChatInviteEventArgs
     {
         public string RoomName;
         public string RoomID;
-        public string Sender;
+        public BuddyInfo Sender;
         public string Message;
     }
 }

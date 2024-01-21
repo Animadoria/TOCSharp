@@ -2,8 +2,8 @@ namespace TOCSharp.Models
 {
     public struct ChatBuddyUpdate
     {
-        public string RoomID;
+        public ChatRoom Room;
         public bool IsOnline;
-        public string[] Buddies;
+        public BuddyInfo[] Buddies;
     }
 }

@@ -8,13 +8,28 @@ using System.Threading.Tasks;
 
 namespace TOCSharp
 {
+    /// <summary>
+    /// Base FLAP connection
+    /// </summary>
     public class FLAPConnection
     {
+        /// <summary>
+        /// Amount of bytes to read
+        /// </summary>
         public const int READ_SIZE = 0x800;
 
+        /// <summary>
+        /// Default host
+        /// </summary>
         public const string DEFAULT_HOST = "testpea-n01a.blue.nina.chat";
+        /// <summary>
+        /// Default port
+        /// </summary>
         public const ushort DEFAULT_PORT = 9898;
 
+        /// <summary>
+        /// FLAPON bytes
+        /// </summary>
         public static readonly byte[] FLAPON = Encoding.UTF8.GetBytes("FLAPON\r\n\r\n");
 
         private readonly string host;
@@ -26,16 +41,30 @@ namespace TOCSharp
 
         private readonly Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
 
+        /// <summary>
+        /// Previous buffer
+        /// </summary>
         private byte[] buffer = Array.Empty<byte>();
 
+        /// <summary>
+        /// Sequence number
+        /// </summary>
         private ushort seqNo = (ushort)new Random().Next(ushort.MaxValue);
 
-        public FLAPConnection(string host = DEFAULT_HOST, ushort port = DEFAULT_PORT)
+        /// <summary>
+        /// FLAP connection constructor
+        /// </summary>
+        /// <param name="host">Host to connect to</param>
+        /// <param name="port">Port to connect to</param>
+        internal FLAPConnection(string host = DEFAULT_HOST, ushort port = DEFAULT_PORT)
         {
             this.host = host;
             this.port = port;
         }
 
+        /// <summary>
+        /// Connect FLAP connection
+        /// </summary>
         public async Task ConnectAsync()
         {
             await this.socket.ConnectAsync(new DnsEndPoint(this.host, this.port));
@@ -45,6 +74,9 @@ namespace TOCSharp
             _ = this.FLAPActivity();
         }
 
+        /// <summary>
+        /// Disconnect FLAP connection
+        /// </summary>
         public async Task DisconnectAsync()
         {
             this.socket.Disconnect(false);
@@ -54,6 +86,9 @@ namespace TOCSharp
                 await this.Disconnected.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>
+        /// On FLAP activity
+        /// </summary>
         private async Task FLAPActivity()
         {
             while (this.Connected)
@@ -125,6 +160,10 @@ namespace TOCSharp
             this.Disconnected?.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>
+        /// Send FLAP packet
+        /// </summary>
+        /// <param name="packet">FLAP Packet</param>
         public async Task SendPacketAsync(FLAPPacket packet)
         {
             packet.Sequence = this.seqNo++;

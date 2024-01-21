@@ -2,14 +2,22 @@ using System;
 
 namespace TOCSharp.Models
 {
-    public struct BuddyInfo
+    public class BuddyInfo
     {
-        public string Screenname;
-        public bool Online;
-        public int Evil;
-        public DateTimeOffset SignonTime;
-        public int IdleTime;
-        public UserClass Class;
+        public string Screenname { get; }
+        public string? Alias { get; internal set; }
+        public bool Online { get; internal set; }
+        public int Evil { get; internal set; }
+        public DateTimeOffset SignonTime { get; internal set; }
+        public int IdleTime { get; internal set; }
+        public UserClass Class { get; internal set; }
+
+        public BuddyInfo(string screenname)
+        {
+            this.Screenname = screenname;
+        }
+
+
     }
 
     [Flags]

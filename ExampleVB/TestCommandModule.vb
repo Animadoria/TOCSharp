@@ -6,6 +6,7 @@ Public Class TestCommandModule
 
     <Command("scream")>
     Public Async Function ScreamCommand(ctx As CommandContext, <RemainingText> text As String) As Task
+        await ctx.ReplyAsync("Test: " & Left(text, 2))
         await ctx.ReplyAsync("Someone told me to scream this: " & UCase$(text))
     End Function
 
@@ -34,7 +35,7 @@ Public Class TestCommandModule
 
         Dim Version = Versions(Int(Rnd() * 16))
 
-        Await Ctx.ReplyAsync("Hey " & Ctx.Sender & ", " & Target & "'s favorite Windows version is Windows " & Version & ".")
+        Await Ctx.ReplyAsync("Hey " & Ctx.Sender.Screenname & ", " & Target & "'s favorite Windows version is Windows " & Version & ".")
     End Function
 
 

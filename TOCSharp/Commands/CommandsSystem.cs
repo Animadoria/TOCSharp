@@ -126,14 +126,13 @@ namespace TOCSharp.Commands
 
         private async Task ClientOnIMReceived(object sender, InstantMessage args)
         {
-            if (Utils.NormalizeScreenname(args.Sender) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
+            if (Utils.NormalizeScreenname(args.Sender.Screenname) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
             string msg = Utils.StripHTML(args.Message);
 
             CommandContext ctx = new CommandContext()
             {
                 IsChat = false,
                 IsWhisper = false,
-                ChatRoomID = "",
                 CommandsSystem = this,
                 Message = msg,
                 Sender = args.Sender
@@ -144,14 +143,14 @@ namespace TOCSharp.Commands
 
         private async Task ChatMessageReceived(object sender, ChatMessage args)
         {
-            if (Utils.NormalizeScreenname(args.Sender) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
+            if (Utils.NormalizeScreenname(args.Sender.Screenname) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
             string msg = Utils.StripHTML(args.Message);
 
             CommandContext ctx = new CommandContext()
             {
                 IsChat = true,
                 IsWhisper = args.Whisper,
-                ChatRoomID = args.RoomID,
+                ChatRoom = args.RoomID,
                 CommandsSystem = this,
                 Message = msg,
                 Sender = args.Sender

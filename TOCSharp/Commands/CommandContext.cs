@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using TOCSharp.Models;
 
 namespace TOCSharp.Commands
 {
@@ -6,15 +7,14 @@ namespace TOCSharp.Commands
     {
         public bool IsChat { get; set; }
         public bool IsWhisper { get; set; }
-        public string Sender { get; set; }= null!;
-        public string ChatRoomID { get; set; }= null!;
+        public BuddyInfo Sender { get; set; } = null!;
+        public ChatRoom ChatRoom { get; set; } = null!;
         public string Message { get; set; } = null!;
         public string Prefix { get; set; } = "";
         public CommandsSystem CommandsSystem { get; set; } = null!;
 
         internal CommandContext()
         {
-
         }
 
         public async Task ReplyAsync(string message, string? toWhisper = null)
@@ -26,7 +26,7 @@ namespace TOCSharp.Commands
                 {
                     string? str = split[i];
 
-                    await this.CommandsSystem.Client.SendChatMessageAsync(this.ChatRoomID, str, toWhisper);
+                    await this.CommandsSystem.Client.SendChatMessageAsync(this.ChatRoom, str, toWhisper);
                     if (i != split.Length - 1)
                     {
                         await Task.Delay(1000);
@@ -35,7 +35,7 @@ namespace TOCSharp.Commands
             }
             else
             {
-                await this.CommandsSystem.Client.SendIMAsync(message, this.Sender);
+                await this.CommandsSystem.Client.SendIMAsync(this.Sender, message);
             }
         }
     }
