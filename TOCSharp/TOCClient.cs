@@ -236,9 +236,9 @@ namespace TOCSharp
             await this.SendCommandAsync("toc_chat_leave", room.ChatID);
         }
 
-        public async Task AcceptChatInvite(ChatRoom room)
+        public async Task AcceptChatInvite(string chatID)
         {
-            await this.SendCommandAsync("toc_chat_accept", room.ChatID);
+            await this.SendCommandAsync("toc_chat_accept", chatID);
         }
 
         public async Task SendChatInviteAsync(string roomID, string message, params string[] screennames)
