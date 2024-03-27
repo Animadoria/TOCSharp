@@ -7,5 +7,6 @@ namespace TOCSharp.Commands
         public IEnumerable<string> StringPrefixes { get; set; } = new[] { "/" };
         public char[] QuotationMarks { get; set; } = { '"' };
         public bool CaseSensitive { get; set; } = false;
+        public bool UseDefaultHelpCommand { get; set; }= false;
     }
 }

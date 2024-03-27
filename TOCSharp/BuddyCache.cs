@@ -20,7 +20,22 @@ namespace TOCSharp
         /// <param name="buddyInfo">Buddy</param>
         internal static void AddOrUpdate(BuddyInfo buddyInfo)
         {
-            buddyInfos.AddOrUpdate(Utils.NormalizeScreenname(buddyInfo.Screenname), buddyInfo, (key, oldValue) => buddyInfo);
+            string normalizedScreenname = Utils.NormalizeScreenname(buddyInfo.Screenname);
+
+
+            if (buddyInfos.TryGetValue(normalizedScreenname, out BuddyInfo? bi))
+            {
+                bi.Alias = buddyInfo.Alias;
+                bi.Class = buddyInfo.Class;
+                bi.Evil = buddyInfo.Evil;
+                bi.Online = buddyInfo.Online;
+                bi.IdleTime = buddyInfo.IdleTime;
+                bi.SignonTime = buddyInfo.SignonTime;
+            }
+            else
+            {
+                buddyInfos[normalizedScreenname] = buddyInfo;
+            }
         }
 
         /// <summary>

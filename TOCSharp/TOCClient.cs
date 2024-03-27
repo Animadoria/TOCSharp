@@ -15,7 +15,7 @@ namespace TOCSharp
         public readonly string Screenname;
         private readonly string password;
 
-        private readonly FLAPConnection connection;
+        private FLAPConnection? connection;
         private readonly TOCClientSettings settings;
 
         public BuddyList BuddyList { get; private set; } = new BuddyList();
@@ -52,10 +52,6 @@ namespace TOCSharp
             this.password = password;
 
             this.settings = settings;
-            this.connection = new FLAPConnection(this.settings.Hostname, this.settings.Port);
-
-            this.connection.Disconnected += this.ConnectionOnDisconnected;
-            this.connection.PacketReceived += this.PacketReceived;
         }
 
         private async Task ConnectionOnDisconnected(object sender, EventArgs e)
@@ -66,6 +62,11 @@ namespace TOCSharp
 
         public async Task ConnectAsync()
         {
+            this.connection = new FLAPConnection(this.settings.Hostname, this.settings.Port);
+
+            this.connection.Disconnected += this.ConnectionOnDisconnected;
+            this.connection.PacketReceived += this.PacketReceived;
+
             await this.connection.ConnectAsync();
         }
 
@@ -84,6 +85,11 @@ namespace TOCSharp
 
         private async Task ParsePacket(FLAPPacket args)
         {
+            if (this.connection == null)
+            {
+                return;
+            }
+
             if (args.Frame == FLAPPacket.FRAME_SIGNON)
             {
                 string normalized = Utils.NormalizeScreenname(this.Screenname);
@@ -150,6 +156,11 @@ namespace TOCSharp
 
         private async Task SendCommandAsync(params string[] args)
         {
+            if (this.connection == null)
+            {
+                return;
+            }
+
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < args.Length; i++)
             {
@@ -209,9 +220,9 @@ namespace TOCSharp
             await this.SendCommandAsync("toc_get_status", screenName);
         }
 
-        public async Task SetCapabilities(string[] caps)
+        public async Task SetCapabilities(IEnumerable<string> caps)
         {
-            List<string> parameters = new List<string>() { "toc_set_caps" };
+            List<string> parameters = new List<string> { "toc_set_caps" };
             parameters.AddRange(caps);
             await this.SendCommandAsync(parameters.ToArray());
         }
@@ -290,7 +301,7 @@ namespace TOCSharp
             await this.SendCommandAsync("toc_set_away", awayMessage);
         }
 
-        public async Task AddBuddies(string group, string[] buddies)
+        public async Task AddBuddies(string group, IEnumerable<string> buddies)
         {
             string config = $"{{g:{group}\n";
             foreach (string buddy in buddies)
@@ -317,6 +328,10 @@ namespace TOCSharp
         /// </summary>
         public async Task DisconnectAsync()
         {
+            if (this.connection == null)
+            {
+                return;
+            }
             await this.connection.DisconnectAsync();
         }
     }

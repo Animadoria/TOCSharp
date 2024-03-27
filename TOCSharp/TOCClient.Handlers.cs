@@ -260,7 +260,10 @@ namespace TOCSharp
             }
             else
             {
-                room.Users.RemoveWhere(b => buddies.Contains(b));
+                foreach (BuddyInfo buddy in buddies)
+                {
+                    room.Users.RemoveWhere(x => x.Screenname == buddy.Screenname);
+                }
             }
 
             if (this.ChatBuddyUpdate != null)

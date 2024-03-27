@@ -35,7 +35,7 @@ namespace TOCSharp.Commands
 
         public TOCClient Client { get; }
 
-        private MethodInfo ConvertGeneric;
+        private readonly MethodInfo ConvertGeneric;
 
         internal CommandsSystem(TOCClient client, CommandsSystemSettings? settings)
         {
@@ -77,6 +77,11 @@ namespace TOCSharp.Commands
                 }
             }
             this.ConvertGeneric = m!;
+
+            if (this.Settings.UseDefaultHelpCommand)
+            {
+                this.RegisterCommands(new DefaultHelpCommand());
+            }
 
             this.Client.ChatMessageReceived += this.ChatMessageReceived;
             this.Client.IMReceived += ClientOnIMReceived;
@@ -162,6 +167,15 @@ namespace TOCSharp.Commands
         private async Task RouteCommand(CommandContext ctx)
         {
             ctx.Message = ctx.Message.Replace("&quot;", "\"");
+
+            /*if (Utils.NormalizeScreenname(ctx.Sender.Screenname) == "animadoria")
+            {
+                // Message will be author: message, so we extract the author and the message
+                string[] split = ctx.Message.Split(": ", 2);
+                ctx.Sender = new BuddyInfo(split[0]);
+                ctx.Message = split[1];
+            }*/
+
             string? raw = null;
             foreach (string? prefix in this.Settings.StringPrefixes)
             {

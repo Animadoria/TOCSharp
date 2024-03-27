@@ -22,6 +22,7 @@ namespace TOCSharp
         /// Default host
         /// </summary>
         public const string DEFAULT_HOST = "testpea-n01a.blue.nina.chat";
+
         /// <summary>
         /// Default port
         /// </summary>
@@ -39,7 +40,7 @@ namespace TOCSharp
         public event AsyncEventHandler<FLAPPacket>? PacketReceived;
         public event AsyncEventHandler? Disconnected;
 
-        private readonly Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+        private Socket? socket;
 
         /// <summary>
         /// Previous buffer
@@ -67,11 +68,12 @@ namespace TOCSharp
         /// </summary>
         public async Task ConnectAsync()
         {
+            this.socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             await this.socket.ConnectAsync(new DnsEndPoint(this.host, this.port));
             await this.socket.SendAsync(FLAPON, SocketFlags.None);
             this.Connected = true;
 
-            _ = this.FLAPActivity();
+            _ = Task.Factory.StartNew(this.FLAPActivity, TaskCreationOptions.LongRunning);
         }
 
         /// <summary>
@@ -79,11 +81,10 @@ namespace TOCSharp
         /// </summary>
         public async Task DisconnectAsync()
         {
+            if (!this.Connected || this.socket == null) return;
             this.socket.Disconnect(false);
-            this.Connected = false;
 
-            if (this.Disconnected != null)
-                await this.Disconnected.Invoke(this, EventArgs.Empty);
+            await this.OnDisconnected();
         }
 
         /// <summary>
@@ -156,8 +157,18 @@ namespace TOCSharp
                 }
             }
 
+            await this.OnDisconnected();
+        }
+
+        private async Task OnDisconnected()
+        {
+            if (!this.Connected) return;
             this.Connected = false;
-            this.Disconnected?.Invoke(this, EventArgs.Empty);
+
+            if (this.Disconnected != null)
+            {
+                await this.Disconnected.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <summary>
@@ -166,8 +177,12 @@ namespace TOCSharp
         /// <param name="packet">FLAP Packet</param>
         public async Task SendPacketAsync(FLAPPacket packet)
         {
-            packet.Sequence = this.seqNo++;
+            if (this.socket == null || !this.Connected)
+            {
+                throw new InvalidOperationException("Socket is not connected");
+            }
 
+            packet.Sequence = this.seqNo++;
             await this.socket.SendAsync(packet.ToBytes(), SocketFlags.None);
         }
     }
