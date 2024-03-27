@@ -185,5 +185,20 @@ namespace TOCSharp
             packet.Sequence = this.seqNo++;
             await this.socket.SendAsync(packet.ToBytes(), SocketFlags.None);
         }
+
+        /// <summary>
+        /// Send FLAP packet with the type FRAME_KEEPALIVE
+        /// </summary>
+        public async Task SendKeepAliveAsync()
+        {
+            if (this.socket == null || !this.Connected)
+            {
+                throw new InvalidOperationException("Socket is not connected");
+            }
+            await this.SendPacketAsync(new FLAPPacket
+            {
+                Frame = FLAPPacket.FRAME_KEEPALIVE
+            });
+        }
     }
 }
