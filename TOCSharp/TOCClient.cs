@@ -18,6 +18,8 @@ namespace TOCSharp
         private FLAPConnection? connection;
         private readonly TOCClientSettings settings;
 
+        private bool isKeepAliveLoopRunning = false;
+
         public BuddyList BuddyList { get; private set; } = new BuddyList();
 
         private readonly ConcurrentDictionary<string, ChatRoom> chatRooms = new ConcurrentDictionary<string, ChatRoom>();
@@ -60,7 +62,7 @@ namespace TOCSharp
                 await this.Disconnected.Invoke(this, EventArgs.Empty);
         }
 
-        public async Task ConnectAsync()
+        public async Task ConnectAsync(bool doKeepAlive = true)
         {
             this.connection = new FLAPConnection(this.settings.Hostname, this.settings.Port);
 
@@ -68,6 +70,9 @@ namespace TOCSharp
             this.connection.PacketReceived += this.PacketReceived;
 
             await this.connection.ConnectAsync();
+
+            if (doKeepAlive && !isKeepAliveLoopRunning)
+                _ = this.StartKeepAliveLoopAsync();
         }
 
         private async Task PacketReceived(object sender, FLAPPacket args)
@@ -192,6 +197,18 @@ namespace TOCSharp
             {
                 Frame = FLAPPacket.FRAME_DATA,
                 Data = Encoding.UTF8.GetBytes(sb.Append('\0').ToString())
+            });
+        }
+
+        private async Task SendKeepAliveAsync()
+        {
+            if (this.connection == null)
+            {
+                return;
+            }
+            await this.connection.SendPacketAsync(new FLAPPacket
+            {
+                Frame = FLAPPacket.FRAME_KEEPALIVE
             });
         }
 
@@ -333,6 +350,25 @@ namespace TOCSharp
                 return;
             }
             await this.connection.DisconnectAsync();
+        }
+
+        private async Task StartKeepAliveLoopAsync()
+        {
+            isKeepAliveLoopRunning = true;
+            while(this.connection != null && this.connection.Connected)
+            {
+                await Task.Delay((int)this.settings.KeepAliveInterval);
+                if (this.settings.DebugMode)
+                {
+                    Console.WriteLine($"Sending keepalive, {this.settings.KeepAliveInterval}ms timer elapsed");
+                }
+                await this.SendKeepAliveAsync();
+            }
+            isKeepAliveLoopRunning = false;
+            if (this.settings.DebugMode)
+            {
+                Console.WriteLine("Keepalive loop aborted; connection is dead!");
+            }
         }
     }
 }

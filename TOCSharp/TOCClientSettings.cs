@@ -6,5 +6,6 @@ namespace TOCSharp
         public ushort Port { get; set; } = FLAPConnection.DEFAULT_PORT;
         public string ClientName { get; set; } = "TOCSharp";
         public bool DebugMode { get; set; } = false;
+        public uint KeepAliveInterval { get; set; } = 120000;
     }
 }
