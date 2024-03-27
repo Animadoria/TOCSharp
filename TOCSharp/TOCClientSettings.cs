@@ -1,3 +1,5 @@
+using System;
+
 namespace TOCSharp
 {
     public class TOCClientSettings
@@ -6,6 +8,6 @@ namespace TOCSharp
         public ushort Port { get; set; } = FLAPConnection.DEFAULT_PORT;
         public string ClientName { get; set; } = "TOCSharp";
         public bool DebugMode { get; set; } = false;
-        public uint KeepAliveInterval { get; set; } = 120000;
+        public TimeSpan KeepAliveInterval { get; set; } = TimeSpan.FromSeconds(120);
     }
 }

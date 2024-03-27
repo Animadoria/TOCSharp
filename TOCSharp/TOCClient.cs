@@ -18,7 +18,7 @@ namespace TOCSharp
         private FLAPConnection? connection;
         private readonly TOCClientSettings settings;
 
-        private bool isKeepAliveLoopRunning = false;
+        private bool keepAliveLoopRunning = false;
 
         public BuddyList BuddyList { get; private set; } = new BuddyList();
 
@@ -71,7 +71,7 @@ namespace TOCSharp
 
             await this.connection.ConnectAsync();
 
-            if (doKeepAlive && !isKeepAliveLoopRunning)
+            if (doKeepAlive && !keepAliveLoopRunning)
                 _ = this.StartKeepAliveLoopAsync();
         }
 
@@ -197,18 +197,6 @@ namespace TOCSharp
             {
                 Frame = FLAPPacket.FRAME_DATA,
                 Data = Encoding.UTF8.GetBytes(sb.Append('\0').ToString())
-            });
-        }
-
-        private async Task SendKeepAliveAsync()
-        {
-            if (this.connection == null)
-            {
-                return;
-            }
-            await this.connection.SendPacketAsync(new FLAPPacket
-            {
-                Frame = FLAPPacket.FRAME_KEEPALIVE
             });
         }
 
@@ -354,25 +342,28 @@ namespace TOCSharp
 
         private async Task StartKeepAliveLoopAsync()
         {
-            if (this.settings.KeepAliveInterval < 5000)
+            if (this.settings.KeepAliveInterval.TotalMilliseconds < 5000)
             {
                 Console.WriteLine("Keep-alive interval is too frequent!");
                 return;
             }
-            isKeepAliveLoopRunning = true;
+            keepAliveLoopRunning = true;
             while(this.connection != null && this.connection.Connected)
             {
-                await Task.Delay((int)this.settings.KeepAliveInterval);
-                if (this.settings.DebugMode)
+                await Task.Delay(this.settings.KeepAliveInterval);
+                if (this.connection != null && this.connection.Connected)
                 {
-                    Console.WriteLine($"Sending keepalive, {this.settings.KeepAliveInterval}ms timer elapsed");
+                    if (this.settings.DebugMode)
+                    {
+                        Console.WriteLine($"Sending keep-alive, {this.settings.KeepAliveInterval}ms timer elapsed");
+                    }
+                    await this.connection.SendKeepAliveAsync();
                 }
-                await this.SendKeepAliveAsync();
             }
-            isKeepAliveLoopRunning = false;
+            keepAliveLoopRunning = false;
             if (this.settings.DebugMode)
             {
-                Console.WriteLine("Keepalive loop aborted; connection is dead!");
+                Console.WriteLine("Keep-alive loop aborted; connection is dead!");
             }
         }
     }
