@@ -354,6 +354,11 @@ namespace TOCSharp
 
         private async Task StartKeepAliveLoopAsync()
         {
+            if (this.settings.KeepAliveInterval < 5000)
+            {
+                Console.WriteLine("Keep-alive interval is too frequent!");
+                return;
+            }
             isKeepAliveLoopRunning = true;
             while(this.connection != null && this.connection.Connected)
             {
