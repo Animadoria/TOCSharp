@@ -16,7 +16,7 @@ namespace TOCSharp
         /// <summary>
         /// Amount of bytes to read
         /// </summary>
-        public const int READ_SIZE = 0x800;
+        private const int READ_SIZE = 0x800;
 
         /// <summary>
         /// Default host
@@ -31,7 +31,7 @@ namespace TOCSharp
         /// <summary>
         /// FLAPON bytes
         /// </summary>
-        public static readonly byte[] FLAPON = Encoding.UTF8.GetBytes("FLAPON\r\n\r\n");
+        private static readonly byte[] FLAPON = Encoding.UTF8.GetBytes("FLAPON\r\n\r\n");
 
         private readonly string host;
         private readonly ushort port;
@@ -73,7 +73,7 @@ namespace TOCSharp
             await this.socket.SendAsync(FLAPON, SocketFlags.None);
             this.Connected = true;
 
-            _ = Task.Factory.StartNew(this.FLAPActivity, TaskCreationOptions.LongRunning);
+            _ = this.FLAPActivity();
         }
 
         /// <summary>

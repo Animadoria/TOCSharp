@@ -18,7 +18,7 @@ namespace TOCSharp
         private FLAPConnection? connection;
         private readonly TOCClientSettings settings;
 
-        private bool keepAliveLoopRunning = false;
+        private bool keepAliveLoopRunning;
 
         public BuddyList BuddyList { get; private set; } = new BuddyList();
 
@@ -71,7 +71,7 @@ namespace TOCSharp
 
             await this.connection.ConnectAsync();
 
-            if (doKeepAlive && !keepAliveLoopRunning)
+            if (doKeepAlive && !this.keepAliveLoopRunning)
                 _ = this.StartKeepAliveLoopAsync();
         }
 
@@ -347,20 +347,23 @@ namespace TOCSharp
                 Console.WriteLine("Keep-alive interval is too frequent!");
                 return;
             }
-            keepAliveLoopRunning = true;
-            while(this.connection != null && this.connection.Connected)
+
+            this.keepAliveLoopRunning = true;
+            while (this.connection is { Connected: true })
             {
                 await Task.Delay(this.settings.KeepAliveInterval);
-                if (this.connection != null && this.connection.Connected)
+
+                if (this.connection is { Connected: true })
                 {
                     if (this.settings.DebugMode)
                     {
-                        Console.WriteLine($"Sending keep-alive, {this.settings.KeepAliveInterval}ms timer elapsed");
+                        Console.WriteLine($"Sending keep-alive, {this.settings.KeepAliveInterval} timer elapsed");
                     }
                     await this.connection.SendKeepAliveAsync();
                 }
             }
-            keepAliveLoopRunning = false;
+
+            this.keepAliveLoopRunning = false;
             if (this.settings.DebugMode)
             {
                 Console.WriteLine("Keep-alive loop aborted; connection is dead!");
