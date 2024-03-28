@@ -71,7 +71,7 @@ namespace TOCSharp
 
             await this.connection.ConnectAsync();
 
-            if (doKeepAlive && !this.keepAliveLoopRunning)
+            if (this.connection.Connected && doKeepAlive && !this.keepAliveLoopRunning)
                 _ = this.StartKeepAliveLoopAsync();
         }
 
