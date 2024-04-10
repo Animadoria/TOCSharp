@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -167,14 +168,6 @@ namespace TOCSharp.Commands
         private async Task RouteCommand(CommandContext ctx)
         {
             ctx.Message = ctx.Message.Replace("&quot;", "\"");
-
-            /*if (Utils.NormalizeScreenname(ctx.Sender.Screenname) == "animadoria")
-            {
-                // Message will be author: message, so we extract the author and the message
-                string[] split = ctx.Message.Split(": ", 2);
-                ctx.Sender = new BuddyInfo(split[0]);
-                ctx.Message = split[1];
-            }*/
 
             string? raw = null;
             foreach (string? prefix in this.Settings.StringPrefixes)
