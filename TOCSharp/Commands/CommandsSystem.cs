@@ -1,20 +1,27 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using System.Web;
 using TOCSharp.Commands.Attributes;
 using TOCSharp.Commands.Converters;
 using TOCSharp.Models;
 
 namespace TOCSharp.Commands
 {
+    /// <summary>
+    /// Commands system
+    /// </summary>
     public class CommandsSystem
     {
+        /// <summary>
+        /// Command system settings
+        /// </summary>
         public CommandsSystemSettings Settings { get; }
 
+        /// <summary>
+        /// Argument converters
+        /// </summary>
         internal Dictionary<Type, IArgumentConverter> ArgumentConverters { get; } = new Dictionary<Type, IArgumentConverter>()
         {
             [typeof(string)] = new StringConverter(),
@@ -32,10 +39,19 @@ namespace TOCSharp.Commands
             [typeof(decimal)] = new DecimalConverter(),
         };
 
+        /// <summary>
+        /// Registered commands map
+        /// </summary>
         public Dictionary<string, CommandInfo> Commands { get; } = new Dictionary<string, CommandInfo>();
 
+        /// <summary>
+        /// Underlying TOC client
+        /// </summary>
         public TOCClient Client { get; }
 
+        /// <summary>
+        /// Convert generic method info
+        /// </summary>
         private readonly MethodInfo ConvertGeneric;
 
         internal CommandsSystem(TOCClient client, CommandsSystemSettings? settings)
@@ -88,6 +104,10 @@ namespace TOCSharp.Commands
             this.Client.IMReceived += ClientOnIMReceived;
         }
 
+        /// <summary>
+        /// Register command module
+        /// </summary>
+        /// <param name="commandModule">Command module</param>
         public void RegisterCommands(ICommandModule commandModule)
         {
             foreach (MethodInfo method in commandModule.GetType().GetMethods())
@@ -135,14 +155,7 @@ namespace TOCSharp.Commands
             if (Utils.NormalizeScreenname(args.Sender.Screenname) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
             string msg = Utils.StripHTML(args.Message);
 
-            CommandContext ctx = new CommandContext()
-            {
-                IsChat = false,
-                IsWhisper = false,
-                CommandsSystem = this,
-                Message = msg,
-                Sender = args.Sender
-            };
+            CommandContext ctx = new CommandContext(args.Sender, null, false, msg, this);
 
             await this.RouteCommand(ctx);
         }
@@ -152,15 +165,7 @@ namespace TOCSharp.Commands
             if (Utils.NormalizeScreenname(args.Sender.Screenname) == Utils.NormalizeScreenname(this.Client.Screenname)) return;
             string msg = Utils.StripHTML(args.Message);
 
-            CommandContext ctx = new CommandContext()
-            {
-                IsChat = true,
-                IsWhisper = args.Whisper,
-                ChatRoom = args.RoomID,
-                CommandsSystem = this,
-                Message = msg,
-                Sender = args.Sender
-            };
+            CommandContext ctx = new CommandContext(args.Sender, args.Room, args.Whisper, msg, this);
 
             await this.RouteCommand(ctx);
         }
@@ -199,7 +204,7 @@ namespace TOCSharp.Commands
             {
                 RemainingTextAttribute? remaining = param.GetCustomAttribute<RemainingTextAttribute>();
 
-                string? arg = null;
+                string? arg;
                 if (remaining != null)
                 {
                     arg = pos >= raw.Length ? null : raw[(pos + 1)..];
@@ -218,7 +223,7 @@ namespace TOCSharp.Commands
                     continue;
                 }
 
-                if (!this.ArgumentConverters.TryGetValue(param.ParameterType, out IArgumentConverter? converter))
+                if (!this.ArgumentConverters.TryGetValue(param.ParameterType, out IArgumentConverter? _))
                 {
                     return;
                 }
@@ -241,7 +246,6 @@ namespace TOCSharp.Commands
             catch (Exception e)
             {
                 Console.WriteLine("Failed to invoke command " + command + ": " + e);
-                return;
             }
         }
 
@@ -276,17 +280,48 @@ namespace TOCSharp.Commands
         }
     }
 
+    /// <summary>
+    /// Command info
+    /// </summary>
     public class CommandInfo
     {
+        /// <summary>
+        /// Command module instance
+        /// </summary>
         public ICommandModule Instance { get; set; } = null!;
+
+        /// <summary>
+        /// Method info
+        /// </summary>
         public MethodInfo Method { get; set; } = null!;
+
+        /// <summary>
+        /// Command attribute
+        /// </summary>
         public CommandAttribute Attribute { get; set; } = null!;
+
+        /// <summary>
+        /// Type parameters
+        /// </summary>
         public ParameterInfo[] TypeParams { get; set; } = null!;
+
+        /// <summary>
+        /// Minimum parameter length
+        /// </summary>
         public int MinParamLen { get; set; }
     }
 
+    /// <summary>
+    /// Command Extensions
+    /// </summary>
     public static class CommandsExtensions
     {
+        /// <summary>
+        /// Use commands
+        /// </summary>
+        /// <param name="client">TOC client to attach command system</param>
+        /// <param name="settings">Settings to use</param>
+        /// <returns>New command system module</returns>
         public static CommandsSystem UseCommands(this TOCClient client, CommandsSystemSettings? settings = null)
         {
             return new CommandsSystem(client, settings);

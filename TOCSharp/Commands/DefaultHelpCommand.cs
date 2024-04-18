@@ -5,8 +5,15 @@ using TOCSharp.Commands.Attributes;
 
 namespace TOCSharp.Commands
 {
+    /// <summary>
+    /// Default help command
+    /// </summary>
     public class DefaultHelpCommand : ICommandModule
     {
+        /// <summary>
+        /// Help command
+        /// </summary>
+        /// <param name="ctx">Command context</param>
         [Command("help")]
         public async Task Help(CommandContext ctx)
         {

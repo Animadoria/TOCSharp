@@ -28,7 +28,7 @@ Module Program
         Dim MSG$ = Utils.StripHTML(args.Message) ' We use this so we don't have <HTML> tags.
 
         if (MSG$.Contains("NINA")) Then
-            Await Client.SendChatMessageAsync(args.RoomID, "NINA is the best!")
+            Await Client.SendChatMessageAsync(args.Room, "NINA is the best!")
         End If
     End Function
 End Module

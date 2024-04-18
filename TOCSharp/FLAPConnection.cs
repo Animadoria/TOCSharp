@@ -36,8 +36,19 @@ namespace TOCSharp
         private readonly string host;
         private readonly ushort port;
 
+        /// <summary>
+        /// Is the connection connected
+        /// </summary>
         public bool Connected { get; private set; }
+
+        /// <summary>
+        /// On FAP packet received
+        /// </summary>
         public event AsyncEventHandler<FLAPPacket>? PacketReceived;
+
+        /// <summary>
+        /// On FLAP connection disconnected
+        /// </summary>
         public event AsyncEventHandler? Disconnected;
 
         private Socket? socket;
@@ -187,7 +198,7 @@ namespace TOCSharp
         }
 
         /// <summary>
-        /// Send FLAP packet with the type FRAME_KEEPALIVE
+        /// Send FLAP packet with the type <see cref="FLAPPacket.FRAME_KEEPALIVE"/>
         /// </summary>
         public async Task SendKeepAliveAsync()
         {

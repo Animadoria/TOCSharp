@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using TOCSharp.Models;
 using TOCSharp.Models.EventArgs;
@@ -166,13 +165,7 @@ namespace TOCSharp
 
             if (this.ChatMessageReceived != null)
             {
-                await this.ChatMessageReceived.Invoke(this, new ChatMessage
-                {
-                    RoomID = room,
-                    Sender = sender,
-                    Whisper = whisper,
-                    Message = message
-                });
+                await this.ChatMessageReceived.Invoke(this, new ChatMessage(room, sender, whisper, message));
             }
         }
 
@@ -188,13 +181,7 @@ namespace TOCSharp
 
             if (this.ChatInviteReceived != null)
             {
-                await this.ChatInviteReceived.Invoke(this, new ChatInviteEventArgs
-                {
-                    RoomName = roomName,
-                    RoomID = roomID,
-                    Sender = sender,
-                    Message = message
-                });
+                await this.ChatInviteReceived.Invoke(this, new ChatInviteEventArgs(roomName, roomID, sender, message));
             }
         }
 
@@ -268,12 +255,7 @@ namespace TOCSharp
 
             if (this.ChatBuddyUpdate != null)
             {
-                await this.ChatBuddyUpdate.Invoke(this, new ChatBuddyUpdate()
-                {
-                    Room = room,
-                    IsOnline = isOnline,
-                    Buddies = buddies
-                });
+                await this.ChatBuddyUpdate.Invoke(this, new ChatBuddyUpdate(room, isOnline, buddies));
             }
         }
 

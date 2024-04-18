@@ -2,6 +2,7 @@
 using TOCSharp;
 using TOCSharp.Commands;
 using TOCSharp.Models;
+using TOCSharp.Models.EventArgs;
 
 namespace ExampleCS;
 
