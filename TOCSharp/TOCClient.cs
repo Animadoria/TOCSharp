@@ -520,6 +520,16 @@ namespace TOCSharp
         }
 
         /// <summary>
+        /// Send a client event to the target user
+        /// </summary>
+        /// <param name="target">Target screenname</param>
+        /// <param name="type">Client event type</param>
+        public async Task SendClientEvent(string target, ClientEventType type)
+        {
+            await this.SendCommandAsync("toc2_client_event", target, ((int)type).ToString());
+        }
+
+        /// <summary>
         /// Disconnect TOC client
         /// </summary>
         public async Task DisconnectAsync()
