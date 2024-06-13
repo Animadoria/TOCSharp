@@ -115,7 +115,7 @@ namespace TOCSharp
                     {
                         break;
                     }
-                    var bytes = pooled[..bytesReceived];
+                    byte[]? bytes = pooled[..bytesReceived];
 
                     this.buffer = this.buffer.Length != 0 ? ByteTools.Concatenate(this.buffer, bytes) : bytes;
 
@@ -141,7 +141,7 @@ namespace TOCSharp
                         if (this.buffer.Length < length + 6)
                         {
                             ArrayPool<byte>.Shared.Return(pooled, true);
-                            continue;
+                            break;
                         }
 
                         byte[] data = this.buffer[6..(length + 6)];

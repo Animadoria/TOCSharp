@@ -7,7 +7,7 @@
         <PackageId>TOCSharp</PackageId>
         <Authors>Animadoria, and contributors</Authors>
         <PackageTags>TOC;AIM;AOL;AOL Instant Messenger;TOC2</PackageTags>
-        <Version>1.4.0</Version>
+        <Version>1.4.1</Version>
         <Description>TOC/TOC2 client for the AIM network</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageProjectUrl>https://github.com/Animadoria/TOCSharp</PackageProjectUrl>
